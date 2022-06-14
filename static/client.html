@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+       <title>Chat Server</title>
+       <link rel="styleSheet" href="style.css">
+       <script src="https://kit.fontawesome.com/9854e6c76a.js" crossorigin="anonymous"></script>
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+      <script>
+
+      var socketio = io.connect();
+
+      //Receives message request from the server side and sends it into the chat
+      socketio.on("message_to_client",function(data) {
+         //Append an HR thematic break and the escaped HTML of the new message
+        document.getElementById("chatlog").appendChild(document.createTextNode(data['userName']+": "));
+        document.getElementById("chatlog").appendChild(document.createTextNode(data['input']));
+        document.getElementById("chatlog").appendChild(document.createElement("br"));
+        document.getElementById("chatlog").appendChild(document.createElement("br"));
+         
+      });
+
+      //Posts the name of the user into the chat 
+      function getUserName() {
+          const usr= document.getElementById("ChatName").value;
+          document.getElementById("userName").innerHTML =usr;
+      }
+
+      //Posts the name of the room into the chat
+      function getRoomName(){
+        const room=document.getElementById("room").value.split(" ")[1];
+          document.getElementById("roomName").innerHTML= room;
+      }
+
+      //Sends message from the chat room to the server
+      function sendMessage() {
+          var name = document.getElementById("userName").textContent;
+          var msg = document.getElementById("message_input").value;
+          socketio.emit("message_to_server", { userName: name, message: msg  });
+          document.getElementById('message_input').value = ''; 
+      }
+      </script>
+   </head>
+
+   <body>
+
+     <div id="header"> 
+        <i class="fa-solid fa-face-smile"></i>
+         Welcome to Chat Cord!
+     </div>
+
+     <!-- Login Page -->
+     <div id="chatCordLogin" style="border: 10px rgb(135,206,235) solid; padding: 10px; background-color: aliceblue;">
+       <div id="login_form">
+           <p>Create or Join a Chat Room</p>
+           <p>
+
+               Your Name: <input type="text" id="ChatName" placeholder="Enter your name ..." required>
+               <br><br>
+
+               Choose a room: &nbsp;
+               <select id="room">
+               </select> &nbsp;
+               <input type="password" id="inputPassword" placeholder="Enter Password ...">&nbsp;
+               <button onClick="getUserName()" id="login">Go!</button> <br><br>
+
+               Create a room: <input type="text" id="CreateRoom" placeholder="Room name ..."> &nbsp;
+               Type: <select id="type">
+                   <option value="public">Public</option>
+                   <option value="private">Private</option>
+               </select> &nbsp;
+               <input type="password" id="createPassword" placeholder="Enter Password ..."> &nbsp;
+               <button id="create">Go!</button>
+
+           </p>
+       </div>
+      </div>
+
+       <!-- Chat Room Page -->
+     <div id="chat">
+         <div id="infoPanel">
+             <div id="userPanel">
+                 <i class="fa-solid fa-people-group"></i>
+                 Users:
+                 <div id="Users">
+                 </div>
+             </div>
+             <br>
+             <div id="roomInfo">
+                 <i class="fa-solid fa-comments"></i>
+                 Room Info:
+                 <br>
+
+                 <div style="display: inline">
+                     Your name:
+                 </div>
+
+                 <div id="userName" style="display: inline"></div><br>
+                 <div style="display: inline">
+                     Room name:
+                 </div>
+
+                 <div id="roomName" style="display: inline"></div><br>
+                 <div style="display: inline">
+                     Owner:
+                 </div>
+
+                 <div id="ownerName" style="display: inline"></div>
+                 <div id="ownerOrNot"></div>
+                 <br><br>
+                 <button id="leave" style="display: inline">leave</button>
+             </div>
+
+             <br>
+             <div id="ownerPrivilege">
+                 <div id="disband">
+                     <i class="fa-solid fa-person"></i>
+                     Owner Privileges:
+                     <br><br>
+                     <button id="disbandButton">disband</button>
+                 </div>
+                 <br>
+
+                 <div id="transferOwnership">
+                     Transfer Ownership: &nbsp;
+                     <input type="text" id="transferOwnershipText" /> &nbsp;
+                     <br>
+                     <button id="transferOwnershipButton">Transfer</button> &nbsp;
+                 </div>
+                 <br>
+
+                 <div id="kickUsers">
+                     Kick Out User: &nbsp;
+                     <input type="text" id="userKickText" /> &nbsp;
+                     <br>
+                     <button id="userKickButton">Kick</button> &nbsp;
+                 </div>
+                 <br>
+
+                 <div id="PermaBanUser">
+                     Permanently Ban User: &nbsp;
+                     <input type="text" id="userPermaBanText" /> &nbsp;
+                     <br>
+                     <button id="userPermaBanButton">Ban</button> &nbsp;
+                 </div>
+             </div>
+         </div>
+
+         <!-- Chat Box -->
+         <div id="chatPanel">
+             <div id="chatlog"></div>
+             <div id="messagePanel">
+                 Group message: &nbsp;
+                 <input type="text" id="message_input" placeholder="Enter Message" /> &nbsp;
+                 <button onClick="sendMessage()">send</button>
+                 <i class="fa-solid fa-paper-plane-top"></i>
+                 <br><br>
+                 <div id="private_message">
+                     Private message: &nbsp;
+                     <input type="text" id="private_message_input" placeholder="Enter Message" /> &nbsp;
+                     <button id="private_message_send">send</button> &nbsp;
+                     <button id="private_message_close">close</button>
+                 </div>
+             </div>
+         </div>
+     </div>
+        
+
+       <script>
+
+           //Hide chat room HTML elements for the login page
+           $("#chat").hide();
+           $("#ownerOrNot").hide();
+           $("#inputPassword").hide();
+           $("#createPassword").hide();
+           $("#private_message").hide();
+           $("#kickUsers").hide();
+           $("#PermaBanUser").hide();
+           $("#disband").hide();
+           $("#transferOwnership").hide();
+
+           //Sends username or roomname to the chat when login/create buttons are clicked
+           document.getElementById("login").addEventListener("click", getUserName);
+           document.getElementById("create").addEventListener("click", getUserName);
+           document.getElementById("login").addEventListener("click", getRoomName);
+
+           //request to show existing rooms
+           socketio.emit("show_existing_rooms_to_server");
+
+           //show already existing rooms in the select room
+           socketio.on("show_existing_rooms_to_client", function (data) {
+
+               document.getElementById("room").innerHTML = "";
+               const isPrivate=data["roomPrivacy"];
+               document.getElementById("room").innerHTML = "";
+
+               //Iterate through the list of rooms and display it
+               for (let i = 0; i < data["rooms"].length; i++) {
+                   document.getElementById("room").innerHTML += "<option id="+isPrivate[i]+":"+data["rooms"][i] + ">" +isPrivate[i]+" "+data["rooms"][i] + "</option>";
+               }
+
+               //if there is no current rooms, disable the login button
+               if ($("#room option").length == 0) {
+                   document.getElementById("login").disabled = true;
+               }
+
+               //If the selected room is public, the input password text box will be hidden
+               const defaultRoom=document.getElementById("room").value;
+               const isDefaultPrivate=defaultRoom.split(" ")[0];
+               if(isDefaultPrivate=="public"){
+                   $("#inputPassword").hide();   
+               }
+               if(isDefaultPrivate=="private"){
+                   $("#inputPassword").show();
+               }
+           });
+
+           //Updates the display of the input password text box accordingly 
+           $("#room").on("change",function(){
+                if($(this).val().split(" ")[0]=="private"){
+                    $("#inputPassword").show();
+                }
+                else{
+                    $("#inputPassword").hide();
+                }
+           });
+
+           //login
+           document.getElementById("login").addEventListener("click", function () {
+               const username = document.getElementById("ChatName").value;
+               const room = document.getElementById("room").value.split(" ")[1];
+               const password = document.getElementById("inputPassword").value;
+               socketio.emit("user_login_to_server", { username: username, roomname: room, password: password });
+
+           });
+
+           //Display chat page if passowrd is correct
+           socketio.on("passed_Password", function (data) {
+               document.getElementById("ChatName").value = "";
+               $("#chatCordLogin").hide();
+               $("#FailedPassword").hide();
+               $("#PasswordStrength").hide();
+               $("#chat").show();
+           });
+
+           //Reloads page if password is incorrect
+           socketio.on("failed_Password", function (data) {
+               alert("Wrong password");
+               window.location.reload();
+           });
+
+           //print out current users in the chat
+           socketio.on("user_login_to_client", function (data) {
+
+               //Iterates through the users list and print it out
+               document.getElementById("Users").innerHTML = "";
+               for (let i = 0; i < data["usersList"].length; i++) {
+                   var element = "<div class='users' id=" + data["usersList"][i] + ">" + data["usersList"][i] + "<br></div>";
+                   document.getElementById("Users").innerHTML += element;
+               }
+
+               //Allows users to send private message by clicking on a user
+               $(".users").off("click").on("click",function(){
+                   const username=$(this).attr("id");
+                   $("#private_message").show();
+
+                   $("#private_message_close").off("click").on("click",function(){
+                       $("#private_message").hide();
+                   })
+
+                   $("#private_message_send").off("click").on("click",function(){
+                    const message=$("#private_message_input").val();
+                    const sender=document.getElementById("userName").textContent;
+                    socketio.emit("private_message_to_server",{message:message,receiver:username,sender:sender});
+                    $("#private_message").hide();
+                    $("#private_message_input").val()="";
+                   })
+               });
+
+               //Light grey highlight when mouse hovers over user 
+               $(".users").hover(function () {
+                                $(this).css("background-color", "lightgrey");
+                }, function () {
+                                $(this).css("background-color", "rgb(135,206,235)");
+                });
+           });
+
+           //Set the owner of the room
+           socketio.on("set_owner_to_client", function (data) {
+
+               //Prints the owner name on the chat 
+               const user = document.getElementById("userName").textContent;
+               const owner = data["owner"];
+               document.getElementById("ownerName").innerHTML = owner;
+
+               //if user is the owner, disable the leave button, allow transfer of ownership,
+               //kicking users priviledge, and banning users priviledge
+               if(owner===user){
+                   document.getElementById("ownerOrNot").textContent="Yes";
+               }
+               else{
+                   document.getElementById("ownerOrNot").textContent="No";
+               }
+               if (document.getElementById("ownerOrNot").textContent == "Yes") {
+                   document.getElementById("leave").disabled = true;
+                   $("#disband").show();
+                   $("#transferOwnership").show();
+                   $("#kickUsers").show();
+                   $("#PermaBanUser").show();
+                   $("#disbandButton").off("click").on("click",function(){
+                      const roomname=document.getElementById("roomName").textContent;
+                      socketio.emit("disband_to_server",{roomname: roomname});
+                   });
+               }
+               else{
+                    $("#transferOwnership").hide();
+                    $("#kickUsers").hide();
+                    $("#PermaBanUser").hide(); 
+                    $("#disband").hide();
+                    document.getElementById("leave").disabled = false;
+               }
+           });
+
+           //Kickout user
+           socketio.on("user_kickout_to_client", function (data) {
+               alert("You were removed by the owner");
+               window.location.reload(); 
+           });
+          
+           //Banning user
+           socketio.on("user_ban_to_client", function (data) {
+               alert("You are banned from this room");
+               window.location.reload();
+           });
+
+           //Alerts that the user does not exist when owner tries to kickout/ban a user that doesn't exists
+           socketio.on("user_not_exist",function(){
+               alert("The user you inputted does not exist!");
+           });
+
+           //Alerts that the username is already in use when user tries to login
+           socketio.on("username_not_allowed",function(data){
+              alert("Username is already in use, please choose another one");
+               window.location.reload();
+           });
+
+           //Alerts that the roomname is already in use when user tries to login
+           socketio.on("roomname_not_allowed",function(data){
+              alert("Roomname is already in use, please choose another one");
+               window.location.reload();
+           });
+           
+           //Send private message to user
+           socketio.on("private_message_to_client",function(data){
+            const sender=data["sender"];
+            const message=data["message"];
+            document.getElementById("chatlog").appendChild(document.createTextNode(sender+" (private) : "));
+            document.getElementById("chatlog").appendChild(document.createTextNode(message));
+            document.getElementById("chatlog").appendChild(document.createElement("br"));
+            document.getElementById("chatlog").appendChild(document.createElement("br")); 
+           })
+
+           //Displays create room password text box when the room is private
+           $("#type").on("change",function(){
+               if($(this).val()=="public"){
+                   $("#createPassword").hide();
+               }
+               else{
+                   $("#createPassword").show();
+               }
+           });
+
+           //Allow user to create a room and then log user into the room
+           document.getElementById("create").addEventListener("click", function () {
+               const roomname = document.getElementById("CreateRoom").value;
+               const username = document.getElementById("ChatName").value;
+               const password = document.getElementById("createPassword").value;
+
+               let tooShort = false;
+               const isPrivate=document.getElementById("createPassword").value=="private";
+
+               //Checks if the password is too short
+               if (document.getElementById("type")[0].value == "private") {
+                   if (password.length < 8) {
+                       tooShort = true;
+                   }
+               }
+
+               //Alerts user if password is too short
+               if (tooShort&&isPrivate) {
+                   alert("password is too short, should be at least 8 characters long");
+                   window.location.reload();
+               }
+               else {
+                   document.getElementById("roomName").textContent = roomname;
+
+                   socketio.emit("create_room_to_server", { roomname: roomname, username: username, password: password });
+                   
+                   socketio.on("roomname_allowed",function(){
+                   socketio.emit("user_login_to_server", { roomname: roomname, username: username, password: password });
+                   });
+
+                   document.getElementById("CreateRoom").value = "";
+                   document.getElementById("ChatName").value = "";
+
+                   //user is the owner
+                   document.getElementById("ownerOrNot").innerHTML = "Yes";
+                   $("#chatCordLogin").hide();
+                   $("#chat").show();
+               }
+           });
+
+           //Create rooms and display it onto the new chat page
+           socketio.on("create_room_to_client", function (data) {
+               const isPrivate=data["roomPrivacy"];
+               document.getElementById("room").innerHTML = "";
+
+               //Adds room name to the option of rooms to join
+               for (let i = 0; i < data["rooms"].length; i++) {
+                   document.getElementById("room").innerHTML += "<option id="+isPrivate[i]+":"+data["rooms"][i] + ">" +isPrivate[i]+" "+data["rooms"][i] + "</option>";
+               }
+
+               document.getElementById("login").disabled = false;
+               const defaultRoom=document.getElementById("room").value;
+               const isDefaultPrivate=defaultRoom.split(" ")[0];
+               if(isDefaultPrivate=="public"){
+                   $("#inputPassword").hide();
+                   
+               }
+               if(isDefaultPrivate=="private"){
+                   $("#inputPassword").show();
+               }
+           });
+           
+           //Allow users to leave
+           document.getElementById("leave").addEventListener("click", function () {
+               const username = document.getElementById("userName").value;
+               const roomname = document.getElementById("roomName").value;
+               socketio.emit("user_logout_to_server", { username: username, roomname: roomname });
+               window.location.reload();
+           });
+
+           //Allow users to be removed
+           socketio.on("remove_user", function (data) {
+               const username2 = data["username"];
+               const roomname = data["roomname"]; 
+               socketio.emit("user_logout_to_server", { username: username2, roomname: roomname });
+           })
+
+           //Displays that the room has been disbanded
+           socketio.on("disband_to_client",function(){
+               alert("the owner has disbanded the room");
+               window.location.reload();
+           });
+
+           //Kicking Out User 
+           document.getElementById("userKickButton").addEventListener("click", function () {
+               const username2 = document.getElementById("userKickText").value;
+               const sender = document.getElementById("userName").textContent;
+               socketio.emit("user_kickout_to_server", { username: username2, sender: sender});
+           });
+
+           //Banning User 
+           document.getElementById("userPermaBanButton").addEventListener("click", function () {
+               const username2 = document.getElementById("userPermaBanText").value;
+               const sender = document.getElementById("userName").textContent;
+               socketio.emit("user_permaBan_to_server", { username: username2, sender: sender });
+           });
+
+           //Transfer ownership to another user
+            document.getElementById("transferOwnershipButton").addEventListener("click", function () {
+                const username2 = document.getElementById("transferOwnershipText").value;
+                const sender = document.getElementById("userName").textContent;
+                socketio.emit("transfer_ownership_to_server", { username: username2, sender: sender});
+            });
+
+       </script>
+   </body>
+</html>
